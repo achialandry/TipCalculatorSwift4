@@ -34,7 +34,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
     }
     
     
-    //action for subTotal text field
+    //action for subTotal text fields
     @IBAction func subTotalTextField(_ sender: UITextField) {
         print("calculate tip from subTotalTextField processed")
         calculateTips()
