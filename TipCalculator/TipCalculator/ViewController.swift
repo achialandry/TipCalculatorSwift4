@@ -9,6 +9,9 @@
 import UIKit
 
 class ViewController: UIViewController, UITextFieldDelegate {
+    
+    //label for bill plus tip
+    @IBOutlet weak var billPlusTip: UILabel!
 
     //label for user final tip
     @IBOutlet weak var tipAmountLabel: UILabel!
@@ -19,14 +22,57 @@ class ViewController: UIViewController, UITextFieldDelegate {
     //user desired tip amount
     @IBOutlet weak var tipPercentTextField: UITextField!
     
+    //slider percent
+    @IBOutlet weak var sliderPercent: UISlider!
+    
     //action to execute
     @IBAction func calculateTipButton(_ sender: UIButton) {
         print("calculate tip button pressed")
         hideTexFieldKeyboard()
         hidePercentTextField()
         calculateTips()
-        
     }
+    
+    
+    //action for subTotal text field
+    @IBAction func subTotalTextField(_ sender: UITextField) {
+        print("calculate tip from subTotalTextField processed")
+        calculateTips()
+    }
+    
+    //action for percent text field
+    @IBAction func perCentTextFieldAction(_ sender: UITextField) {
+        print("calculate tip from percentTextField processed")
+        calculateTips()
+    }
+    
+    //disabling keyboard from TextFields once screen is tapped
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        self.view.endEditing(true)
+    }
+    
+    //action for slider
+    @IBAction func percentTipSlider(_ sender: UISlider) {
+        //getting value from slider and assigning to tip percent if needed
+        let valueOfSlider = Int(sender.value)
+//        let roundedSliderAmount = (valueOfSlider * 100).rounded() / 100
+        //setting value from slider onto percent text field
+        tipPercentTextField.text = String(valueOfSlider)
+        
+        //getting value from input field of total amount
+        guard let tipAmount = convertToCurrency(input: billAmountTextField.text!)else{
+            print("Invalid Amount: \(billAmountTextField.text!)")
+            return
+        }
+        
+        let tipWithValueInput = calculateTip(valueToGiveTip: tipAmount, percentageOfTip: (Double(valueOfSlider)))
+//        let tipRounded = (tipWithValueInput * 100).rounded() / 100
+        tipAmountLabel.text = "$" + String(tipWithValueInput)
+        billPlusTip.text = "$" + String(tipAmount + tipWithValueInput)
+        print("Calculating tip based on tip percent FROM SLIDER by user")
+    }
+    
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,19 +80,17 @@ class ViewController: UIViewController, UITextFieldDelegate {
         print("View loaded")
         //setting delegate to fix keyboard obscuring calculate tip button
         billAmountTextField.delegate = self
+        self.billAmountTextField.keyboardType = UIKeyboardType.decimalPad
         
         //setting delegate to fix keyboard obscuring calculate tip button
         tipPercentTextField.delegate = self
-        
-        
+        self.tipPercentTextField.keyboardType = UIKeyboardType.decimalPad
         
         //listening keyboard events
         NotificationCenter.default.addObserver(ViewController.keyboardWillChange(self), selector: #selector(keyboardWillChange(notification:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
-        
         NotificationCenter.default.addObserver(ViewController.keyboardWillChange(self), selector: #selector(keyboardWillChange(notification:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
         
         NotificationCenter.default.addObserver(ViewController.keyboardWillChange(self), selector: #selector(keyboardWillChange(notification:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
-    
         
     }
     
@@ -62,8 +106,6 @@ class ViewController: UIViewController, UITextFieldDelegate {
         // Dispose of any resources that can be recreated.
     }
 
-
-  
     
     //method to make the textField to give up focus once return key is hit
     func hideTexFieldKeyboard() {
@@ -89,7 +131,6 @@ class ViewController: UIViewController, UITextFieldDelegate {
             //resets the keyboard back to position o on  xy axis along the y-axis
             view.frame.origin.y = 0
         }
-        
     }
     
     //function takes two parameters to evaluate tip math
@@ -100,7 +141,7 @@ class ViewController: UIViewController, UITextFieldDelegate {
     //method to calculate user tips
     func calculateTips() {
         //type casting textField from text to Double
-        let tipPercent = Double(tipPercentTextField.text!)
+              let tipPercent = Double(tipPercentTextField.text!)
 //            else {
 //            print("Invalid percent: \(tipPercentTextField.text!)")
 //            return
@@ -113,18 +154,17 @@ class ViewController: UIViewController, UITextFieldDelegate {
         var tipWithValueInput = calculateTip(valueToGiveTip: tipAmount, percentageOfTip: 15.0)
         
         
-        
         //update the tipAmountLabel on UI
         if tipPercentTextField.text?.isEmpty ?? true {
             print("tip percent field is empty")
             tipAmountLabel.text = "$" + String(tipWithValueInput)
+            billPlusTip.text = "$" + String(tipAmount + tipWithValueInput)
         } else {
             tipWithValueInput = calculateTip(valueToGiveTip: tipAmount, percentageOfTip: (tipPercent)!)
             tipAmountLabel.text = "$" + String(tipWithValueInput)
+            billPlusTip.text = "$" + String(tipAmount + tipWithValueInput)
             print("Calculating tip based on tip percent input by user")
         }
-        
-
     }
     
     //format number to style that matches local currency and return as an optional double
@@ -133,10 +173,8 @@ class ViewController: UIViewController, UITextFieldDelegate {
         currencyType.numberStyle = .currency
         //using gps to assing current currency of user location
         currencyType.locale = Locale.current
-        
         return currencyType.number(from: input)?.doubleValue
     }
-    
     
     
     //implementing UITextFieldDelegate to ensure return button perfoms the optional method  (from UITextFieldDelegate
@@ -144,7 +182,6 @@ class ViewController: UIViewController, UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         print("keyboard return key pressed")
         textField.resignFirstResponder()
-        
         calculateTips()
         return true
     }
